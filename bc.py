@@ -2,10 +2,6 @@ import re
 import sys
 from typing import Any, List, Union
 
-if len(sys.argv) != 2:
-    print("Usage: python3 program_name.py [input_file]")
-    sys.exit()
-
 
 class Node:
     def __init__(self, value: Any, children: List = None):
