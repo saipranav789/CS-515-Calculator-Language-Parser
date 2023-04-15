@@ -1,0 +1,5 @@
+x  = 3
+y  = 5
+z  = 2 + x * y
+z2 = (2 + x) * y
+print x, y, z, z2
