@@ -237,9 +237,10 @@ def main():
 
     # """
 
-    filename = sys.argv[1]
-    with open(str(filename), 'r') as f:
-        input_str = f.read()
+    # filename = sys.argv[1]
+    # with open(str(filename), 'r') as f:
+    #     input_str = f.read()
+    input_str = sys.stdin.read()
     parser = Parser(input_str)
 
     try:
