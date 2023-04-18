@@ -189,9 +189,9 @@ class Parser:
             if self.get_next_token() != ")":
                 raise ParseError("Unbalanced parentheses")
             return expr
-        elif token.isnumeric() or token.replace(".", "", 1).isnumeric():
+        elif token and (token.isnumeric() or token.replace(".", "", 1).isnumeric()):
             return Node(float(self.get_next_token()))
-        elif re.match(r'\w+', token):
+        elif token and re.match(r'\w+', token):
             return Node(self.get_next_token())
         else:
             raise ParseError(f"Unexpected token: {token}")
@@ -322,10 +322,11 @@ def main():
     # y= ++x + z + --x
     # print y
 
-    # 1/0
+    # print 0 / 1, 1 / 0
+
     # """
 
-    # input_str = "1/0"
+    # input_str = "1/"
 
     parser = Parser(input_str)
     # print(parser)
