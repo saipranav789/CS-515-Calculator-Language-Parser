@@ -249,81 +249,81 @@ class Parser:
 
 
 def main():
-    # input_str = sys.stdin.read()
-    input_str = """
-                # first example
-    x=2
-    z = 3
-    y= --x + z + --x
-    print y
-        """
-    """#TC-2
-        x  = 3
-        y  = 5
-        z  = 2 + x * y
-        z2 = (2 + x) * y
-        print x, y, z, z2
-        """
-    input_str = """
+    input_str = sys.stdin.read()
+    # input_str = """
+    #             # first example
+    # x=2
+    # z = 3
+    # y= --x + z + --x
+    # print y
+    #     """
+    # """#TC-2
+    #     x  = 3
+    #     y  = 5
+    #     z  = 2 + x * y
+    #     z2 = (2 + x) * y
+    #     print x, y, z, z2
+    #     """
+    # input_str = """
 
-    # first example
-    x=3
-    y=5
-    z =2+x*y
-    z2 = (2 + x) * y
-    print x, y, z, z2
+    # # first example
+    # x=3
+    # y=5
+    # z =2+x*y
+    # z2 = (2 + x) * y
+    # print x, y, z, z2
 
-    # second example
-    pi = 3.14159
-    r=2
-    area = pi * r^2
-    print area
+    # # second example
+    # pi = 3.14159
+    # r=2
+    # area = pi * r^2
+    # print area
 
-    #third example
+    # #third example
 
-    x = 1
+    # x = 1
 
-    print x
+    # print x
 
-    # Fourth example
+    # # Fourth example
 
-    print 5 - 1 - 1 - 1
+    # print 5 - 1 - 1 - 1
 
-    # Fifth example
+    # # Fifth example
 
-    print ((5 - 1) - 1) - 1
+    # print ((5 - 1) - 1) - 1
 
-    # Sixth example
+    # # Sixth example
 
-    print 2 ^ 3 ^ 2
+    # print 2 ^ 3 ^ 2
 
-    # Seventh Example
+    # # Seventh Example
 
-    print 1
-    print 2
+    # print 1
+    # print 2
 
-    # Eight Example - Extension ( comments feature)
+    # # Eight Example - Extension ( comments feature)
 
-    x = 1
-    /*
-    x = 2
-    y = 3
-    */
-    y = 4
-    # print 0
-    print x, y
+    # x = 1
+    # /*
+    # x = 2
+    # y = 3
+    # */
+    # y = 4
+    # # print 0
+    # print x, y
 
-    # Ninth Example
+    # # Ninth Example
 
-    print 0 / 1, 1 / 0
+    # print 0 / 1, 1 / 0
 
-    x=2
-    z = 3
-    y= ++x + z + --x
-    print y
+    # x=2
+    # z = 3
+    # y= ++x + z + --x
+    # print y
 
-    1/0
-    """
+    # 1/0
+    # """
 
     # input_str = "1/0"
 
