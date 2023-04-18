@@ -8,6 +8,13 @@ class Node:
         self.value = value
         self.children = children if children else []
 
+    def __str__(self) -> str:
+        print('VAL', self.value)
+        # print(self.children)
+        for node in self.children:
+            print('CHIL', node.value)
+        return ''
+
 
 class ParseError(Exception):
     pass
@@ -22,7 +29,15 @@ class Parser:
         input_str = self.remove_comments(input_str)
         self.tokens = list(
             reversed(re.findall(r'[a-zA-Z_]\w*|\d+\.?\d*|[+\-*/%=^()]|\S+|\n', input_str)))
+
         self.variables = {}
+        self.pre_variables = {}
+        self.post_variables = {}
+
+    def __str__(self):
+        print(self.tokens)
+        print(self.variables)
+        return ""
 
     def remove_comments(self, input_str: str) -> str:
         # Remove multi-line comments
@@ -42,9 +57,10 @@ class Parser:
 
     def parse_statement_list(self) -> Node:
         children = []
+        self.main_list = Node("statement_list", children)
         while self.tokens:
-            children.append(self.parse_statement())
-        return Node("statement_list", children)
+            self.main_list.children.append(self.parse_statement())
+        return self.main_list
 
     def parse_statement(self) -> Node:
         token = self.peek_next_token()
@@ -52,11 +68,13 @@ class Parser:
             node = self.parse_print_statement()
         elif re.match(r'\w+', token):
             var = self.get_next_token()
+            # print('VAR', var)
             if self.peek_next_token() == "=":
                 self.get_next_token()
                 node = Node("assignment", [Node(var), self.parse_expression()])
             else:
-                node = Node("expression", [Node(var)])
+                node = Node(self.get_next_token(), [
+                            Node(var), self.parse_expression()])
         elif token == "\n":
             self.get_next_token()
             node = Node("empty_statement")
@@ -64,6 +82,7 @@ class Parser:
             node = Node("expression", [self.parse_expression()])
 
         if self.peek_next_token() == "\n":
+
             self.get_next_token()
 
         return node
@@ -107,18 +126,60 @@ class Parser:
 
         while self.peek_next_token() == "^":
             op = self.get_next_token()
-            right = self.parse_unary_expression()
-            left = Node(op, [left, right])
+            # right = self.parse_unary_expression()
+            left = Node(op, [left, self.parse_exponential_expression()])
 
         return left
 
     def parse_unary_expression(self) -> Node:
-        if self.peek_next_token() == "-":
-            op = self.get_next_token()
-            right = self.parse_primary_expression()
-            return Node(op, [right])
-        else:
-            return self.parse_primary_expression()
+        left = self.parse_prepostfix_expression()
+        if not left:
+            if self.peek_next_token() == "-":
+                op = self.get_next_token()
+                right = self.parse_primary_expression()
+                return Node(op, [right])
+            else:
+                node = self.parse_prepostfix_expression(left)
+                return self.parse_primary_expression()
+        return left
+
+    def create_increment_expression(self, var) -> Node:
+        # print('HERE', self.peek_next_token())
+        node2 = Node("+", [var, Node(float(1))])
+        node1 = Node("assignment", [var, node2])
+        return node1
+
+    def create_decrement_expression(self, var) -> Node:
+        node2 = Node("-", [var, Node(float(1))])
+        node1 = Node("assignment", [var, node2])
+        return node1
+
+    def parse_prepostfix_expression(self, var=None) -> Node:
+        if ''.join(self.tokens[-2:]) == '++':
+            self.tokens.pop()
+            self.tokens.pop()
+            if not var:
+                var = self.parse_primary_expression()
+            if type(var.value) == float:
+                raise ParseError(f"Unexpected token: {var.value}")
+            # self.variables[var.value] += 1
+            node = self.create_increment_expression(var)
+            # self.main_list.children.append(node)
+            return node
+            # var = Node(float(self.variables[var.value]))
+        elif ''.join(self.tokens[-2:]) == '--':
+            self.tokens.pop()
+            self.tokens.pop()
+            if not var:
+                var = self.parse_primary_expression()
+            if type(var.value) == float:
+                raise ParseError(f"Unexpected token: {var.value}")
+            # self.variables[var.value] -= 1
+            node = self.create_decrement_expression(var)
+            # self.main_list.children.append(node)
+            return node
+            # var = Node(float(self.variables[var.value]))
+        return None
 
     def parse_primary_expression(self) -> Node:
         token = self.peek_next_token()
@@ -145,22 +206,31 @@ class Parser:
         elif node.value == "assignment":
             var = node.children[0].value
             self.variables[var] = self.evaluate(node.children[1])
+            if len(node.children) > 2:
+                self.evaluate(node.children[2])
+            return self.variables[var]
         elif node.value == "print_statement":
+            print_vals = []
             for expr in node.children:
                 try:
-                    print(self.evaluate(expr), end=' ')
+                    print_vals.append(str(self.evaluate(expr)))
+                    # print(self.evaluate(expr))
                 except DivideByZeroError:
-                    print("divide by zero", end=' ')
-            print()
+                    print_vals.append("divide by zero")
+                    # print("divide by zero", end=' ')
+            # print('HERE', print_vals)
+            print(" ".join(print_vals))
         elif node.value == "expression":
             return self.evaluate(node.children[0])
         elif node.value in ["+", "-", "*", "/", "%", "^"]:
             left = self.evaluate(node.children[0])
-            right = self.evaluate(node.children[1])
+            right = None
+            if len(node.children) >= 2:
+                right = self.evaluate(node.children[1])
             if node.value == "+":
                 return left + right
             elif node.value == "-":
-                return left - right
+                return left - right if right else -left
             elif node.value == "*":
                 return left * right
             elif node.value == "/":
@@ -170,6 +240,7 @@ class Parser:
             elif node.value == "%":
                 return left % right
             elif node.value == "^":
+                # print('POWER', left, right)
                 return left ** right
         elif isinstance(node.value, float):
             return node.value
@@ -178,72 +249,96 @@ class Parser:
 
 
 def main():
-    # input_str = """
+    # input_str = sys.stdin.read()
+    input_str = """
+                # first example
+    x=2
+    z = 3
+    y= --x + z + --x
+    print y
+        """
+    """#TC-2
+        x  = 3
+        y  = 5
+        z  = 2 + x * y
+        z2 = (2 + x) * y
+        print x, y, z, z2
+        """
+    input_str = """
 
-    # # first example
-    # x=3
-    # y=5
-    # z =2+x*y
-    # z2 = (2 + x) * y
-    # print x, y, z, z2
+    # first example
+    x=3
+    y=5
+    z =2+x*y
+    z2 = (2 + x) * y
+    print x, y, z, z2
 
-    # # second example
-    # pi = 3.14159
-    # r=2
-    # area = pi * r^2
-    # print area
+    # second example
+    pi = 3.14159
+    r=2
+    area = pi * r^2
+    print area
 
-    # #third example
+    #third example
 
-    # x = 1
+    x = 1
 
-    # print x
+    print x
 
-    # # Fourth example
+    # Fourth example
 
-    # print 5 - 1 - 1 - 1
+    print 5 - 1 - 1 - 1
 
-    # # Fifth example
+    # Fifth example
 
-    # print ((5 - 1) - 1) - 1
+    print ((5 - 1) - 1) - 1
 
-    # # Sixth example
+    # Sixth example
 
-    # print 2 ^ 2 ^ 2
+    print 2 ^ 3 ^ 2
 
-    # # Seventh Example
+    # Seventh Example
 
-    # print 1
-    # print 2
+    print 1
+    print 2
 
-    # # Eight Example - Extension ( comments feature)
+    # Eight Example - Extension ( comments feature)
 
-    # x = 1
-    # /*
-    # x = 2
-    # y = 3
-    # */
-    # y = 4
-    # # print 0
-    # print x, y
+    x = 1
+    /*
+    x = 2
+    y = 3
+    */
+    y = 4
+    # print 0
+    print x, y
 
-    # # Ninth Example
+    # Ninth Example
 
-    # print 0 / 1, 1 / 0
+    print 0 / 1, 1 / 0
 
-    # """
+    x=2
+    z = 3
+    y= ++x + z + --x
+    print y
 
-    # filename = sys.argv[1]
-    # with open(str(filename), 'r') as f:
-    #     input_str = f.read()
-    input_str = sys.stdin.read()
+    1/0
+    """
+
+    # input_str = "1/0"
+
     parser = Parser(input_str)
-
+    # print(parser)
     try:
         ast = parser.parse()
-        parser.evaluate(ast)
+        # print(ast)
     except ParseError as e:
         print("parse error")
+        return
+    try:
+        parser.evaluate(ast)
+    except DivideByZeroError as e:
+        print('divide by zero')
 
 
 if __name__ == "__main__":
